@@ -8,13 +8,15 @@ from mythril.mythril import MythrilAnalyzer
 from mythril.mythril import MythrilDisassembler
 
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
+
+
 from karl.exceptions import RPCError
 from karl.sandbox.sandbox import Sandbox
 from karl.sandbox.exceptions import SandboxBaseException
 from karl.ethrpcclient.ethjsonrpc import EthJsonRpc
 
 logging.basicConfig(level=logging.INFO)
-
 
 class Karl:
     """
@@ -108,6 +110,10 @@ class Karl:
         self.eth_port = int(eth_port)
         self.rpc_tls = eth_tls
         self.web3 = Web3(Web3.HTTPProvider(web3_rpc, request_kwargs={"timeout": 60}))
+
+        # inject the poa compatibility middleware to the innermost layer
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        
         if self.web3 is None:
             raise RPCError(
                 "Invalid RPC argument provided {}, use "
